@@ -1,0 +1,46 @@
+import apiClient from '../api/axios';
+export const authService = {
+    async login(email, password) {
+        try {
+            const response = await apiClient.post('/login', {
+                email,
+                password
+            });
+            return response.data;
+        } catch (error) {
+            throw new Error(error.response?.data?.message ||
+                'Terjadi kesalahan');
+        }
+    },
+
+    async register(name, email, password, passwordConfirmation) {
+        try {
+            const response = await apiClient.post('/register', {
+                name,
+                email,
+                password,
+                password_confirmation: passwordConfirmation
+            });
+            return response.data;
+        } catch (error) {
+            // Handle validation errors
+            if (error.response?.data?.errors) {
+                const errors = error.response.data.errors;
+                const errorMessages = Object.values(errors).flat();
+                throw new Error('Gagal registrasi: ' + errorMessages.join(', '));
+            }
+            throw new Error('Gagal registrasi: ' + error.response?.data?.message ||
+                'Terjadi kesalahan');
+        }
+    },
+
+    async logout() {
+        try {
+            const response = await apiClient.post('/logout');
+            return response.data;
+        } catch (error) {
+            throw new Error('Gagal logout: ' + error.response?.data?.message
+                || 'Terjadi kesalahan');
+        }
+    }
+}
