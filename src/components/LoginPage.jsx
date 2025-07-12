@@ -29,7 +29,7 @@ export default function Login() {
     // Update message when error changes
     useEffect(() => {
         if (error) {
-            setMessage('Password atau email salah');
+            setMessage('Password');
             setSuccess(false);
         }
     }, [error]);
