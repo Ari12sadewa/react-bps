@@ -2,6 +2,7 @@
 import React, { createContext, useState } from "react";
 import { authService } from "../services/authService";
 import { Navigate } from "react-router-dom";
+
 const AuthContext = createContext(null);
 
 const AuthProvider = ({ children }) => {
@@ -11,7 +12,6 @@ const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(localStorage.getItem("token") || null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
 
     const loginAction = async (email, password) => {
         setLoading(true);
@@ -25,13 +25,45 @@ const AuthProvider = ({ children }) => {
             return response;
         } catch (error) {
             console.error("Login error:", error);
-            setError(error.message);
-            throw error;
+            
+            // Handle specific error cases
+            let errorMessage = "Terjadi kesalahan saat login";
+            
+            // Check if error has response (from backend)
+            if (error.response) {
+                const status = error.response.status;
+                const data = error.response.data;
+                
+                if (status === 401) {
+                    // Unauthorized - wrong credentials
+                    errorMessage = "Password atau email salah";
+                } else if (status === 400) {
+                    // Bad request - validation errors
+                    errorMessage = data.message || "Data yang dimasukkan tidak valid";
+                } else if (status === 422) {
+                    // Unprocessable entity - validation errors
+                    errorMessage = "Password atau email salah";
+                } else if (status === 500) {
+                    // Server error
+                    errorMessage = "Terjadi kesalahan server. Silakan coba lagi.";
+                } else {
+                    // Other error codes
+                    errorMessage = data.message || "Terjadi kesalahan saat login";
+                }
+            } else if (error.request) {
+                // Network error
+                errorMessage = "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.";
+            } else {
+                // Other errors
+                errorMessage = error.message || "Terjadi kesalahan yang tidak diketahui";
+            }
+            
+            setError(errorMessage);
+            throw new Error(errorMessage);
         } finally {
             setLoading(false);
         }
     };
-
 
     const logoutAction = async () => {
         setLoading(true);
@@ -54,12 +86,49 @@ const AuthProvider = ({ children }) => {
 
     const registerAction = async (name, email, password, passwordConfirmation) => {
         setLoading(true);
+        setError(null);
         try {
             const data = await authService.register(name, email, password, passwordConfirmation);
             return data;
         } catch (error) {
-            throw error;
-        }finally {
+            console.error("Registration error:", error);
+            
+            // Handle registration errors similarly
+            let errorMessage = "Terjadi kesalahan saat registrasi";
+            
+            if (error.response) {
+                const status = error.response.status;
+                const data = error.response.data;
+                
+                if (status === 409 || status === 400) {
+                    // Conflict - email already exists or bad request
+                    if (data.message && (data.message.includes('email') || data.message.includes('Email'))) {
+                        errorMessage = "Email sudah terdaftar";
+                    } else {
+                        errorMessage = data.message || "Email sudah terdaftar";
+                    }
+                } else if (status === 422) {
+                    // Validation errors
+                    if (data.message && (data.message.includes('email') || data.message.includes('Email'))) {
+                        errorMessage = "Email sudah terdaftar";
+                    } else {
+                        errorMessage = data.message || "Data yang dimasukkan tidak valid";
+                    }
+                } else if (status === 500) {
+                    // Server error
+                    errorMessage = "Terjadi kesalahan server. Silakan coba lagi.";
+                } else {
+                    errorMessage = data.message || "Terjadi kesalahan saat registrasi";
+                }
+            } else if (error.request) {
+                errorMessage = "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.";
+            } else {
+                errorMessage = error.message || "Terjadi kesalahan yang tidak diketahui";
+            }
+            
+            setError(errorMessage);
+            throw new Error(errorMessage);
+        } finally {
             setLoading(false);
         }
     };
@@ -69,8 +138,14 @@ const AuthProvider = ({ children }) => {
     };
 
     const value = {
-        user, token, loginAction, logoutAction,registerAction,
-        loading, error, clearError
+        user, 
+        token, 
+        loginAction, 
+        logoutAction,
+        registerAction,
+        loading, 
+        error, 
+        clearError
     }
 
     return (
@@ -79,4 +154,5 @@ const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
+
 export { AuthContext, AuthProvider };

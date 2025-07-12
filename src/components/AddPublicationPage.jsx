@@ -9,7 +9,7 @@ export default function AddPublicationPage() {
     const [releaseDate, setReleaseDate] = useState('');
     const [coverFile, setCoverFile] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
-    const { addPublication, loading, error } = usePublications();
+    const {addPublication, loading, error } = usePublications();
     const [tautan, setTautan] = useState('');
     const navigate = useNavigate();
 
@@ -50,12 +50,12 @@ export default function AddPublicationPage() {
         } catch (err) {
             alert('Gagal menambah publikasi: ' + err.message);
         }finally{
-            if (error) return <div className="text-red-500">Error</div>;
-            if (loading) return <div className="flex justify-center items-center h-64">Loading...</div>;
             navigate('/publications');   
         }
     };
 
+    if (loading) return <div className="flex justify-center items-center h-64">Menambahkan publikasi...</div>;
+    if (error) return <div className="text-red-500">Terjadi kesalahan saat menambahkan publikasi : Reload Page</div>;
 
     return (
         <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg mt-15">

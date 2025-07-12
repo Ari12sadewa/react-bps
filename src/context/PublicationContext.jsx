@@ -50,6 +50,7 @@ const PublicationProvider = ({ children }) => {
             } catch (err) {
                 setError(err.message);
                 console.error('Error fetching publications:', err);
+
             } finally {
                 setLoading(false);
             }
@@ -102,14 +103,20 @@ const PublicationProvider = ({ children }) => {
         }
     };
 
+    const clearError = () => {
+        setError(null);
+    }
+
     const value = {
         publications,
         loading,
         error,
+        clearError,
         addPublication,
         editPublication,
         deletePublication,
     };
+
 
     return (
         <PublicationContext.Provider value={value}>

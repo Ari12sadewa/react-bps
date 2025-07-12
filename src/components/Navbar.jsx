@@ -20,7 +20,7 @@ function BpsLogo() {
 }
 
 export default function Navbar() {
-  const { logoutAction } = useAuth();
+  const { logoutAction,loading,error } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -37,6 +37,8 @@ export default function Navbar() {
   if (location.pathname === "/login" || location.pathname === "/register") {
     return null;
   }
+
+  if(error)return <div className="text-red-500">Terjadi Kesalahan: Reload Page</div>;
 
   return (
     <nav className="bg-blue-800 backdrop-blur sticky top-0 z-50 shadow-md font-[Inter]">

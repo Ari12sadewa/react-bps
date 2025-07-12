@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,11 +18,36 @@ export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
-    const { registerAction, error } = useAuth();
+    const { registerAction, error, loading, clearError } = useAuth();
     const navigate = useNavigate();
+
+    // Clear errors when component mounts
+    useEffect(() => {
+        clearError();
+    }, []);
+
+    // Update message when error changes
+    useEffect(() => {
+        if (error) {
+            // Map error messages to user-friendly messages
+            if (error.includes('Email sudah terdaftar') || error.includes('email already exists') || error.includes('already taken')) {
+                setMessage('Email telah digunakan');
+            } else if (error.includes('validation') || error.includes('invalid')) {
+                setMessage('Data yang dimasukkan tidak valid');
+            } else {
+                setMessage('Registrasi gagal. Silakan coba lagi.');
+            }
+            setSuccess(false);
+        }
+    }, [error]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Clear previous messages and errors
+        setMessage('');
+        setSuccess(false);
+        clearError();
 
         // Validasi form
         if (!name || !email || !password || !passwordConfirmation) {
@@ -32,7 +57,7 @@ export default function Register() {
         }
 
         if (password !== passwordConfirmation) {
-            setMessage('Password dan konfirmasi password tidak cocok!');
+            setMessage('Password dan konfirmasi password tidak sama!');
             setSuccess(false);
             return;
         }
@@ -43,25 +68,41 @@ export default function Register() {
             return;
         }
 
+        // validasi email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setMessage('Format email tidak valid!');
+            setSuccess(false);
+            return;
+        }
+        
         try {
             await registerAction(name, email, password, passwordConfirmation);
             setSuccess(true);
-            setMessage('Registrasi berhasil! Mengarahkan ke halaman publications...');
-            // Redirect ke publications setelah registrasi berhasil
+            setMessage('Registrasi berhasil! Silakan Login');
+            // Redirect to login page after 2 seconds
             setTimeout(() => {
-                navigate('/publications', { replace: true });
-            }, 1500);
+                navigate('/login', { replace: true });
+            }, 2000);
         } catch (err) {
             console.error('Registration failed:', err);
-            setMessage('Registrasi gagal. Silakan coba lagi.');
-            setSuccess(false);
         }
     }
 
-    const handleLoginRedirect = () => {
-        navigate('/login');
+    const handleRedirectToLogin = (e) => {
+        e.preventDefault();
+        navigate('/login', { replace: true });
     }
 
+    // Clear message when user starts typing
+    const handleInputChange = (setter) => (e) => {
+        setter(e.target.value);
+        if (message && !isSuccess) {
+            // setMessage('');
+            clearError();
+        }
+    };
+    
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-200">
             <div className="relative w-full max-w-md bg-white rounded-lg shadow-lg p-8">
@@ -75,8 +116,9 @@ export default function Register() {
                             id="name"
                             className="bg-gray-200 transition-all duration-300 w-full h-12 rounded-lg px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            onChange={handleInputChange(setName)}
                             placeholder="Masukkan nama lengkap"
+                            disabled={loading}
                         />
                     </div>
                     <div className="mb-4">
@@ -86,8 +128,9 @@ export default function Register() {
                             id="email"
                             className="bg-gray-200 transition-all duration-300 w-full h-12 rounded-lg px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={handleInputChange(setEmail)}
                             placeholder="Masukkan email"
+                            disabled={loading}
                         />
                     </div>
                     <div className="mb-4">
@@ -98,8 +141,9 @@ export default function Register() {
                                 id="password"
                                 className="bg-gray-200 w-full h-12 transition-all duration-300 rounded-lg px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={handleInputChange(setPassword)}
                                 placeholder="Masukkan password (min. 8 karakter)"
+                                disabled={loading}
                             />
                             <span className={`material-icons ` + `${showPassword ? 'text-gray-900' : 'text-gray-500'}` + ` select-none absolute cursor-pointer right-4 top-3`}
                                 onClick={() => setShowPassword(!showPassword)}
@@ -116,8 +160,9 @@ export default function Register() {
                                 id="passwordConfirmation"
                                 className="bg-gray-200 w-full h-12 transition-all duration-300 rounded-lg px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 value={passwordConfirmation}
-                                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                                onChange={handleInputChange(setPasswordConfirmation)}
                                 placeholder="Konfirmasi password"
+                                disabled={loading}
                             />
                             <span className={`material-icons ` + `${showPasswordConfirmation ? 'text-gray-900' : 'text-gray-500'}` + ` select-none absolute cursor-pointer right-4 top-3`}
                                 onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
@@ -128,9 +173,10 @@ export default function Register() {
                     </div>
                     <button
                         type="submit"
-                        className="w-full h-12 focus:scale-95 rounded-lg bg-blue-600 hover:bg-blue-700 cursor-pointer text-white font-semibold transition duration-200"
+                        disabled={loading}
+                        className={`w-full h-12 focus:scale-95 rounded-lg ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'} text-white font-semibold transition duration-200`}
                     >
-                        Register
+                        {loading ? 'Memproses...' : 'Register'}
                     </button>
                     {message && (
                         <div className={`mt-4 text-center font-semibold ${isSuccess ? 'text-green-600' : 'text-red-600'}`}>
@@ -141,7 +187,7 @@ export default function Register() {
                 <div className="mt-4 text-center">
                     <span className="text-gray-600">Sudah punya akun? </span>
                     <span
-                        onClick={handleLoginRedirect}
+                        onClick={handleRedirectToLogin}
                         className="text-blue-600 hover:underline cursor-pointer hover:scale-99"
                     >
                         Login

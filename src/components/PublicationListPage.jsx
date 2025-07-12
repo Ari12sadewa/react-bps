@@ -63,7 +63,7 @@ export default function PublicationListPage() {
     const [tmpPub, setTmpPub] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
-    const { publications, deletePublication, loading, error } = usePublications();
+    const { publications, deletePublication, } = usePublications();
 
     const handleEdit = (pub) => navigate(`/publications/edit/${pub.id}`);
 
@@ -104,8 +104,6 @@ export default function PublicationListPage() {
 
         return regex.test(combinedText);
     });
-    if (loading) return <div className="flex justify-center items-center h-64">Loading...</div>;
-    if (error) return <div className="text-red-500">Error: {error}</div>;
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">

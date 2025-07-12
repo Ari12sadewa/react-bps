@@ -59,8 +59,8 @@ export default function EditPublicationPage() {
         }
     };
 
-    if (loading) return <div className="flex justify-center items-center h-64">Loading...</div>;
-    if (error) return <div className="text-red-500">Error: {error}</div>;
+    if (loading) return <div className="flex justify-center items-center h-64">Mengedit Publikasi...</div>;
+    if (error) return <div className="text-red-500">Terjadi kesalahan saat mengedit : Reload Page</div>;
 
     return (
         <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg">
